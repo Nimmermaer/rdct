@@ -1,4 +1,5 @@
 <?php
+
 namespace FoT3\Rdct\ViewHelpers;
 
 /*
@@ -13,26 +14,19 @@ namespace FoT3\Rdct\ViewHelpers;
 use FoT3\Rdct\Redirects;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
-
 class RedirectViewHelper extends AbstractViewHelper
 {
-
     /**
      * @var Redirects
      */
     protected $rdct;
 
-    /**
-     * @param Redirects $rdct
-     */
-    public function injectRdct(Redirects $rdct): void
+    public function __construct(Redirects $rdct)
     {
         $this->rdct = $rdct;
     }
 
-    /**
-     * @return void
-     */
+
     public function initializeArguments()
     {
         $this->registerArgument('inUrl', 'string', 'Input URL', true);

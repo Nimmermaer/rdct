@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 namespace FoT3\Rdct;
 
 /*
@@ -14,7 +16,7 @@ namespace FoT3\Rdct;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -39,16 +41,18 @@ class Redirects
             $count = $connection->count(
                 '*',
                 'cache_md5params',
-                ['md5hash' => $md5]
+                [
+                    'md5hash' => $md5,
+                ]
             );
-            if (!$count) {
+            if (! $count) {
                 $connection->insert(
                     'cache_md5params',
                     [
                         'md5hash' => $md5,
-                        'tstamp'  => $GLOBALS['EXEC_TIME'],
-                        'type'    => 2,
-                        'params'  => $inUrl
+                        'tstamp' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
+                        'type' => 2,
+                        'params' => $inUrl,
                     ]
                 );
             }

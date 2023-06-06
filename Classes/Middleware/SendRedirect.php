@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 namespace FoT3\Rdct\Middleware;
 
 /*
@@ -15,6 +17,7 @@ namespace FoT3\Rdct\Middleware;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -31,9 +34,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class SendRedirect implements MiddlewareInterface
 {
-    /**
-     * @inheritDoc
-     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         // No GET parameter set, do nothing
@@ -41,7 +41,6 @@ class SendRedirect implements MiddlewareInterface
         if (empty($redirectHash)) {
             return $handler->handle($request);
         }
-
         $row = $this->fetchRedirectRecord($redirectHash);
         if (is_array($row)) {
             $this->updateMD5paramsRecord($redirectHash);
@@ -53,8 +52,8 @@ class SendRedirect implements MiddlewareInterface
     /**
      * Checks cache_md5params if a redirect hash is available
      *
-     * @param string $redirectHash
      * @return mixed
+     * @throws Exception
      */
     protected function fetchRedirectRecord(string $redirectHash)
     {
@@ -62,15 +61,11 @@ class SendRedirect implements MiddlewareInterface
             ->getQueryBuilderForTable('cache_md5params');
         return $queryBuilder
             ->select('params')
-            ->from('cache_md5params')
-            ->where(
-                $queryBuilder->expr()->eq(
-                    'md5hash',
-                    $queryBuilder->createNamedParameter($redirectHash, \PDO::PARAM_STR)
-                )
-            )
-            ->execute()
-            ->fetch();
+            ->from('cache_md5params')->where($queryBuilder->expr()->eq(
+                'md5hash',
+                $queryBuilder->createNamedParameter($redirectHash, \PDO::PARAM_STR)
+            ))->executeQuery()
+            ->fetchAssociative();
     }
 
     /**
@@ -85,9 +80,12 @@ class SendRedirect implements MiddlewareInterface
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('cache_md5params');
         $connection->update(
             'cache_md5params',
-            ['tstamp' => $dateAspect->get('timestamp')],
-            ['md5hash' => $redirectHash]
+            [
+                'tstamp' => $dateAspect->get('timestamp'),
+            ],
+            [
+                'md5hash' => $redirectHash,
+            ]
         );
     }
-
 }
